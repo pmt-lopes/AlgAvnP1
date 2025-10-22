@@ -19,7 +19,7 @@ def generator(size):
 
 	#Generates the population of number form 1 to 2 size
 	rng = np.random.default_rng()
-	population = np.linspace(1, 2 * size, 2 * size, dtype= int)
+	population = np.linspace(1, 4 * size, 2 * size, dtype= int)
 	
 	sample = rng.choice(population, size, replace= False)
 	
