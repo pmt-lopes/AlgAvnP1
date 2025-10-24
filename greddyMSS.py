@@ -13,7 +13,8 @@ to the maximum sum of elements of a subset equal or less than the value
 #%% Imports
 import numpy as np
 from setGenerator import *
-
+from schemeSS import *
+import time
 #%% functions
 def greedySS2(instance, value):
     '''Implements a 2-aproach algorithm for solving the problem of
@@ -48,13 +49,28 @@ def greedySS2(instance, value):
 #%% testing
 if __name__ == '__main__':
     #creates an instance
-    instance = generator(1000000)
+    instance = generator(1000)
     max_value = max(instance)
     total_sum = sum(instance)
     
-    print(instance, max_value, total_sum)
+    rgn = np.random.default_rng()
+    exact = rgn.choice(instance, 500, replace= False).sum()
+    print(exact)
+    print(max_value, total_sum)
     
-    if 2 * max_value < total_sum:
-        s, sol = greedySS2(instance, 3 * max_value)
-        print(s, sol)
+    if exact < total_sum and exact > max_value:
+        t0 = time.time_ns()
+        s, sol = greedySS2(instance, exact)
+        t1 = time.time_ns()
+        print(s)
+        print("Total time: {} s".format((t1 - t0) / 10 ** 9))
+        tg = t1-t0
         
+        # t0 = time.time_ns()
+        # s, _ = schemeSS(instance, exact, 2)
+        # t1 = time.time_ns()
+        # print(s)
+        # print("Total time: {} s".format((t1 - t0) / 10 ** 9))
+        # ta = t1 - t0
+        
+        # print(ta / tg)
