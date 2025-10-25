@@ -13,6 +13,7 @@ less than the value
 @author: Pedro Lopes, 57514
 """
 import sys
+import time
 
 def merge_lists(L, L_plus):
     merged = []
@@ -135,7 +136,7 @@ def schemeSS(S, M, eps):
     
     return best_val, subset
 
-def schemeSS_sol(S, M, eps):
+def schemeSS_val(S, M, eps):
     n = len(S)
     delta = eps / (2 * n)
     
@@ -158,6 +159,35 @@ def schemeSS_sol(S, M, eps):
     best_val = L[-1]
     
     return best_val
+
+def schemeSS_val_timed(S, M, eps):
+    
+    t0 = time.time_ns()
+    
+    n = len(S)
+    delta = eps / (2 * n)
+    
+    L = [0]
+    
+    for i, xi in enumerate(S):
+        # Create L_plus
+        L_plus = [val + xi for val in L]
+        
+        # Merge (both already sorted)
+        L = merge_lists_sol(L, L_plus)
+        
+        # Trim
+        L = trim_sol(L, delta)
+        
+        # Remove elements > M
+        L = remove_greater_sol(L, M)
+
+    # Extract best solution value
+    best_val = L[-1]
+    
+    t1 = time.time_ns()
+    
+    return (t1 - t0) / 10**9, best_val
 
 
 def read_instance(filename):
