@@ -80,7 +80,7 @@ def greedySS2_timed(instance, value):
             
     t1 = time.time_ns()
     
-    return (t1 - t0) / 10**9, v, sol
+    return (t1 - t0) / 10**9, v
 
 #%% testing
 if __name__ == '__main__':
