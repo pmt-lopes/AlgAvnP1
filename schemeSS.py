@@ -1,48 +1,90 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Implements the schemeSS algorithm given in theorical class 03
+for solving a maximum subset-sum problem using triming the solutuins
+that are closer to a factor of each other
 
+Receives a set of numbers, a value and the trimming factor 
+and gives a approximation to the maximum sum of elements of a subset equal or 
+less than the value
+
+@author: Andre Wemans, 48432
+@author: Pedro Lopes, 57514
+"""
 import sys
 
 def merge_lists(L, L_plus):
     merged = []
     i, j = 0, 0
-    while i < len(L) and j < len(L_plus):
+    len_L, len_L_plus = len(L), len(L_plus)
+    
+    while i < len_L and j < len_L_plus:
         if L[i][0] < L_plus[j][0]:
             merged.append(L[i]); i += 1
         else:
             merged.append(L_plus[j]); j += 1
-    merged.extend(L[i:])
-    merged.extend(L_plus[j:])
+            
+    if i < len_L:
+        merged.extend(L[i:])
+    
+    if j < len_L_plus:
+        merged.extend(L_plus[j:])
+        
     return merged
 
 def trim(L, delta):
+    
     trimmed = [L[0]]
     last_val = L[0][0]
-    for val, chosen in L[1:]:
-        if val > last_val * (1 + delta):
-            trimmed.append((val, chosen))
+    threshold_multiplier = 1 + delta
+    
+    for item in L[1:]:
+        val = item[0]
+        if val > last_val * threshold_multiplier:
+            trimmed.append(item)
             last_val = val
+    
     return trimmed
 
 def remove_greater(L, M):
-    return [(val, chosen) for val, chosen in L if val <= M]
+    # Since L is sorted, find the last element <= M
+    left, right = 0, len(L) - 1
+    result_idx = 0
+    
+    while left <= right:
+        mid = (left + right) // 2
+        if L[mid][0] <= M:
+            result_idx = mid
+            left = mid + 1
+        else:
+            right = mid - 1
+    
+    return L[:result_idx + 1]
 
 def schemeSS(S, M, eps):
     n = len(S)
     delta = eps / (2 * n)
-    L = [(0, [False] * n)]
+    
+    L = [(0, ())]
     
     for i, xi in enumerate(S):
-        L_plus = []
-        for val, chosen in L:
-            new_chosen = chosen.copy()
-            new_chosen[i] = True
-            L_plus.append((val + xi, new_chosen))
-       
-        L = merge_lists(sorted(L), sorted(L_plus))
+        # Create L_plus
+        L_plus = [(val + xi, indices + (i,)) for val, indices in L]
+        
+        # Merge (both already sorted)
+        L = merge_lists(L, L_plus)
+        
+        # Trim
         L = trim(L, delta)
+        
+        # Remove elements > M
         L = remove_greater(L, M)
     
-    best_val, best_chosen = L[-1]
-    subset = [S[i] for i, used in enumerate(best_chosen) if used]
+    # Extract best solution
+    best_val, best_indices = L[-1]
+    subset = [S[i] for i in best_indices]
+    
     return best_val, subset
 
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Implements the greedySS2 algorithm from pratical class 2
-for solving a Maximum subset-sum problem
+for solving a maximum subset-sum problem
 
 Receives a set of numbers and a value and gives a approximation
 to the maximum sum of elements of a subset equal or less than the value
@@ -14,6 +14,7 @@ to the maximum sum of elements of a subset equal or less than the value
 import numpy as np
 from setGenerator import *
 from schemeSS import *
+import schemeSS_fast as ss
 import time
 #%% functions
 def greedySS2(instance, value):
@@ -58,19 +59,36 @@ if __name__ == '__main__':
     print(exact)
     print(max_value, total_sum)
     
-    if exact < total_sum and exact > max_value:
-        t0 = time.time_ns()
-        s, sol = greedySS2(instance, exact)
-        t1 = time.time_ns()
-        print(s)
-        print("Total time: {} s".format((t1 - t0) / 10 ** 9))
-        tg = t1-t0
-        
-        # t0 = time.time_ns()
-        # s, _ = schemeSS(instance, exact, 2)
-        # t1 = time.time_ns()
-        # print(s)
-        # print("Total time: {} s".format((t1 - t0) / 10 ** 9))
-        # ta = t1 - t0
-        
-        # print(ta / tg)
+    r = [.1, .2, .5, 1., 2.]
+    for f in r:
+        print('factor to exact of: ', f)
+        print('Target value: ', f * exact)
+        if exact < total_sum and exact > max_value:
+            t0 = time.time_ns()
+            s, sol = greedySS2(instance, f * exact)
+            t1 = time.time_ns()
+            print(s)
+            print("Total time: {} s".format((t1 - t0) / 10 ** 9))
+            print('Appr: ', s / (f * exact))
+            tg = t1-t0
+            
+            t0 = time.time_ns()
+            s, _ = schemeSS(instance, f * exact, .1)
+            t1 = time.time_ns()
+            print(s)
+            print("Total time: {} s".format((t1 - t0) / 10 ** 9))
+            print('Appr: ', s / (f * exact))
+            ta1 = t1 - t0
+            
+            
+            t0 = time.time_ns()
+            s, _ = ss.schemeSS_optimized(instance, f * exact, .1)
+            t1 = time.time_ns()
+            print(s)
+            print("Total time: {} s".format((t1 - t0) / 10 ** 9))
+            print('Appr: ', s / (f * exact))
+            ta2 = t1 - t0
+            
+            print('ta1 / tg', ta1 / tg)
+            print('ta2 / tg', ta2 / tg)
+            print('ta1 / ta2', ta1 / ta2)

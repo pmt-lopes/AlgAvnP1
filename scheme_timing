@@ -31,6 +31,19 @@ Size = 1000
 timeit schemeSS(instance, exact, .1)
 6min 3s ± 13.4 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
 
+timeit schemeSS(instance, exact, .1)
+5min 28s ± 5.63 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+timeit schemeSS(instance, .1 * exact, .1)
+3min 46s ± 6.62 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+Different version
+timeit ss.schemeSS_optimized(instance, exact, .1)
+3min 31s ± 1.64 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+timeit ss.schemeSS_optimized(instance, .1 * exact, .1)
+1min 45s ± 1.4 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
 
 timeit schemeSS(instance, exact, .5)
 1min 35s ± 2.48 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
@@ -50,3 +63,80 @@ timeit greedySS2(instance, exact)
 size = 1000
 timeit greedySS2(instance, exact)
 129 µs ± 868 ns per loop (mean ± std. dev. of 7 runs, 10,000 loops each)
+
+runfile('/home/andre/Documents/alAv/project1/AlgAvnP1/greddyMSS.py', wdir='/home/andre/Documents/alAv/project1/AlgAvnP1')
+1000382 exact #solution
+3993 1997976 #Maximum value in list and total list sum
+#For each factor to exact, solution, time and 1/approx of greedy, schemeSS original, schemeSS_optimized
+factor to exact of:  0.1
+Target value:  100038.20000000001
+99628
+Total time: 0.000182116 s
+Appr:  0.9958995663656482
+100036
+Total time: 894.368592912 s
+Appr:  0.9999780084007908
+100036
+Total time: 125.019038626 s
+Appr:  0.9999780084007908
+ta1 / tg 4910983.070746118
+ta2 / tg 686480.2577807552
+ta1 / ta2 7.153859146106085
+factor to exact of:  0.2
+Target value:  200076.40000000002
+199518
+Total time: 0.000179625 s
+Appr:  0.9972090661367357
+200072
+Total time: 1081.347079328 s
+Appr:  0.9999780084007908
+200072
+Total time: 156.485778685 s
+Appr:  0.9999780084007908
+ta1 / tg 6020025.493823243
+ta2 / tg 871180.3962978427
+ta1 / ta2 6.910193938483772
+factor to exact of:  0.5
+Target value:  500191.0
+499690
+Total time: 0.000191165 s
+Appr:  0.99899838261784
+500177
+Total time: 1388.591262103 s
+Appr:  0.9999720106919157
+500177
+Total time: 210.165624353 s
+Appr:  0.9999720106919157
+ta1 / tg 7263836.278100071
+ta2 / tg 1099393.8448617687
+ta1 / ta2 6.607128384472066
+factor to exact of:  1.0
+Target value:  1000382.0
+997684
+Total time: 0.000209261 s
+Appr:  0.9973030302424474
+1000361
+Total time: 1544.965793753 s
+Appr:  0.9999790080189368
+1000361
+Total time: 255.725572001 s
+Appr:  0.9999790080189368
+ta1 / tg 7382960.961445277
+ta2 / tg 1222041.240369682
+ta1 / ta2 6.041499024379769
+factor to exact of:  2.0
+Target value:  2000764.0
+1997976
+Total time: 0.000230402 s
+Appr:  0.9986065323046596
+1997902
+Total time: 1744.313551111 s
+Appr:  0.9985695464332625
+1997902
+Total time: 278.312000397 s
+Appr:  0.9985695464332625
+ta1 / tg 7570739.625137802
+ta2 / tg 1207940.9050138453
+ta1 / ta2 6.267475166801332
+
+scheme_optimized 6 to 7 times faster and same results
