@@ -14,7 +14,6 @@ to the maximum sum of elements of a subset equal or less than the value
 import numpy as np
 from setGenerator import *
 from schemeSS import *
-import schemeSS_fast as ss
 import time
 #%% functions
 def greedySS2(instance, value):
@@ -82,7 +81,7 @@ if __name__ == '__main__':
             
             
             t0 = time.time_ns()
-            s, _ = ss.schemeSS_optimized(instance, f * exact, .1)
+            s = schemeSS_sol(instance, f * exact, .1)
             t1 = time.time_ns()
             print(s)
             print("Total time: {} s".format((t1 - t0) / 10 ** 9))

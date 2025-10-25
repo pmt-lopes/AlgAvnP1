@@ -33,6 +33,25 @@ def merge_lists(L, L_plus):
         
     return merged
 
+def merge_lists_sol(L, L_plus):
+    merged = []
+    i, j = 0, 0
+    len_L, len_L_plus = len(L), len(L_plus)
+    
+    while i < len_L and j < len_L_plus:
+        if L[i] < L_plus[j]:
+            merged.append(L[i]); i += 1
+        else:
+            merged.append(L_plus[j]); j += 1
+            
+    if i < len_L:
+        merged.extend(L[i:])
+    
+    if j < len_L_plus:
+        merged.extend(L_plus[j:])
+        
+    return merged
+
 def trim(L, delta):
     
     trimmed = [L[0]]
@@ -47,6 +66,20 @@ def trim(L, delta):
     
     return trimmed
 
+def trim_sol(L, delta):
+    
+    trimmed = [L[0]]
+    last_val = L[0]
+    threshold_multiplier = 1 + delta
+    
+    for item in L[1:]:
+        val = item
+        if val > last_val * threshold_multiplier:
+            trimmed.append(item)
+            last_val = val
+    
+    return trimmed
+
 def remove_greater(L, M):
     # Since L is sorted, find the last element <= M
     left, right = 0, len(L) - 1
@@ -55,6 +88,21 @@ def remove_greater(L, M):
     while left <= right:
         mid = (left + right) // 2
         if L[mid][0] <= M:
+            result_idx = mid
+            left = mid + 1
+        else:
+            right = mid - 1
+    
+    return L[:result_idx + 1]
+
+def remove_greater_sol(L, M):
+    # Since L is sorted, find the last element <= M
+    left, right = 0, len(L) - 1
+    result_idx = 0
+    
+    while left <= right:
+        mid = (left + right) // 2
+        if L[mid] <= M:
             result_idx = mid
             left = mid + 1
         else:
@@ -86,6 +134,30 @@ def schemeSS(S, M, eps):
     subset = [S[i] for i in best_indices]
     
     return best_val, subset
+
+def schemeSS_sol(S, M, eps):
+    n = len(S)
+    delta = eps / (2 * n)
+    
+    L = [0]
+    
+    for i, xi in enumerate(S):
+        # Create L_plus
+        L_plus = [val + xi for val in L]
+        
+        # Merge (both already sorted)
+        L = merge_lists_sol(L, L_plus)
+        
+        # Trim
+        L = trim_sol(L, delta)
+        
+        # Remove elements > M
+        L = remove_greater_sol(L, M)
+
+    # Extract best solution value
+    best_val = L[-1]
+    
+    return best_val
 
 
 def read_instance(filename):
