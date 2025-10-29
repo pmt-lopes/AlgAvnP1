@@ -38,7 +38,7 @@ import setGenerator as sg
 cpus = 10 #To use 10 parallel workers
 file_out = 'mss-data.txt'
 file_instances = 'mss-instances.txt'
-sizes = [10, 100] #instance sizes to be used
+sizes = [10, 100, 1000, 10000] #instance sizes to be used
 instance_repetition = 2 # number of instances to be used for each size
 exact_sampling_ratio = 2 #How much elements should be summed to give obtained an exact M
 rgn = np.random.default_rng() #Random generator
@@ -143,12 +143,13 @@ if __name__ == '__main__':
                             #Write data to file
                             write_line_to_file(text_out, fout)
                             
-                            #Computes time and value using scheme algorithm
-                            text_out_base_SS = text_out_base + ['S']
-                            count += 1
-                            text_out_base_SS[0] = count
                             
+                            text_out_base_SS = text_out_base + ['S']
+                            
+                            #Computes time and value using scheme algorithm
                             for e in epsilon:
+                               	count += 1
+                               	text_out_base_SS[0] = count
                                 text_out = text_out_base_SS + [e]
                                 data = pool.starmap(sss.schemeSS_val_timed, cpus * [[instance, M, e]])
                                 
