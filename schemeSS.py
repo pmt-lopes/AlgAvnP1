@@ -14,6 +14,7 @@ less than the value
 """
 import sys
 import time
+import csv
 
 def merge_lists(L, L_plus):
     merged = []
@@ -189,6 +190,67 @@ def schemeSS_val_timed(S, M, eps):
     
     return (t1 - t0) / 10**9, best_val
 
+def schemeSS_val_timed_opt_1(S, M, eps):
+    
+    t0 = time.time_ns()
+    
+    n = len(S)
+    delta = eps / (2 * n)
+    
+    L = [0]
+    
+    for i, xi in enumerate(S):
+        # Create L_plus
+        L_plus = [val + xi for val in L]
+        L_plus = remove_greater_sol(L_plus, M)
+        
+        # Merge (both already sorted)
+        L = merge_lists_sol(L, L_plus)
+        
+        # Trim
+        L = trim_sol(L, delta)
+        
+        # # Remove elements > M
+        # L = remove_greater_sol(L, M)
+
+    # Extract best solution value
+    best_val = L[-1]
+    
+    t1 = time.time_ns()
+    
+    return (t1 - t0) / 10**9, best_val
+
+def schemeSS_val_timed_opt_2(S, M, eps):
+    
+    t0 = time.time_ns()
+    
+    n = len(S)
+    delta = eps / (2 * n)
+    
+    L = [0]
+    
+    for i, xi in enumerate(S):
+        # Create L_plus
+        L_plus = [val + xi for val in L if (val + xi) <= M]
+        #L_plus = remove_greater_sol(L_plus, M)
+        
+        # Merge (both already sorted)
+        L = merge_lists_sol(L, L_plus)
+        
+        # Trim
+        L = trim_sol(L, delta)
+        
+        # # Remove elements > M
+        # L = remove_greater_sol(L, M)
+
+    # Extract best solution value
+    best_val = L[-1]
+    
+    t1 = time.time_ns()
+    
+    return (t1 - t0) / 10**9, best_val
+
+
 
 def read_instance(filename):
     with open(filename, "r") as f:
@@ -201,6 +263,18 @@ def read_instance(filename):
         M, eps = int(M), float(eps)    
         
         return S, M, eps
+    
+def read_large_instances(file_name):
+    with open(file_name, 'r') as file:
+        
+        out = []
+        
+        csv_file = csv.reader(file, delimiter= '\t')
+        
+        for line in csv_file:
+            out.append(line)
+        
+    return out
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -208,7 +282,31 @@ if __name__ == "__main__":
         sys.exit(1)
     
     filename = sys.argv[1]
-    S, M, eps = read_instance(filename)
-    best_val, subset = schemeSS(S, M, eps)
-    print("Best value:", best_val)
-    print("Subset:", subset)
+    #S, M, eps = read_instance(filename)
+    instances = read_large_instances(filename)
+    for i in range(len(instances)):
+        instances[i] = [int(j) for j in instances[i]]
+    
+    M= [89, 133, 9872, 10825, 1033062, 1000706]
+    
+    for i, instance in enumerate(instances):
+        t0, best_value = schemeSS_val_timed(instance, M[i], 2.0)
+        print(f"O: Size {len(instance)} - time {t0} - solution {best_value}")
+        
+        t1, best_value = schemeSS_val_timed_opt_1(instance, M[i], 2.0)
+        print(f"OPT1: Size {len(instance)} - time {t1} - solution {best_value}")
+        t2, best_value = schemeSS_val_timed_opt_2(instance, M[i], 2.0)
+        print(f"OPT2: Size {len(instance)} - time {t2} - solution {best_value}")
+        
+        print()
+        
+        print(f'Speed up O / Opt1: {t0/t1}')
+        print(f'Speed up O / Opt2: {t0/t2}')
+        print(f'Speed up Opt1 / Opt2: {t1/t2}')
+        
+        print()
+              
+    
+    # best_val, subset = schemeSS(S, M, eps)
+    # print("Best value:", best_val)
+    # print("Subset:", subset)
