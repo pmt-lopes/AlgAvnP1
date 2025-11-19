@@ -52,7 +52,7 @@ def localImprovement(Sol, sum, remaining, M):
     
     error = M - sum
     
-    for el in sol:
+    for el in Sol:
         replacements = [r for r in remaining if filterFunction(el, r, error)] # Remaining elements that can replace el
         if(len(replacements) > 0):
             bestReplacement = max(replacements)
@@ -94,6 +94,24 @@ def read_large_instances(file_name):
         
     return out
 
+def rgli(S, M, iterations):
+    
+    finalSol = []
+    finalSum = 0
+    
+    for j in range(iterations):
+        sol, sum, remaining = randomGreedy(instance, M) # Perform random Greedy selection
+
+        improvedSol, improvedSum = localImprovement(sol, sum, remaining, M) # Perform local improvement
+
+        if improvedSum > finalSum:
+            finalSum = improvedSum
+            finalSol = improvedSol
+
+    finalSol.sort()
+    
+    return finalSum, finalSol
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python RGLI.py <instance_file> iterations")
@@ -115,15 +133,7 @@ if __name__ == "__main__":
         finalSum = 0
 
         for j in range(iterations):
-            sol, sum, remaining = randomGreedy(instance, M[i]) # Perform random Greedy selection
-    
-            improvedSol, improvedSum = localImprovement(sol, sum, remaining, M[i]) # Perform local improvement
-    
-            if improvedSum > finalSum:
-                finalSum = improvedSum
-                finalSol = improvedSol
-
-        finalSol.sort()
+            finalSum, _ = rgli(instance, M[i], iterations)
         print("Final sum: ", str(finalSum))
     #print(finalSol)
 
