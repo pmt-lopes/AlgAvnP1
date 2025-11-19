@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Maximum Subset Sum problem - Analysis of 2 approximation algorithms
+Maximum Subset Sum problem - Analysis of 3 approximation algorithms
 1- A 2-approximation greed algorithm
 2- A trim scheme algorithm with a approximation ratio of (1+epsilon)
+3- randomized greedy with local improvement (RGLI)
 
 Several instances of sets containing positive integers number, with different
 sizes are created and tested for different target values, M, and epsilon values
@@ -36,9 +37,9 @@ import setGenerator as sg
 
 #%% Constants and hard coded parameters
 cpus = 10 #To use 10 parallel workers
-file_out = 'mss-data.txt'
-file_instances = 'mss-instances.txt'
-sizes = [10, 100, 1000, 10000] #instance sizes to be used
+file_out = 'mss-data-0.txt'
+file_instances = 'mss-instances-0.txt'
+sizes = [10, 100] #instance sizes to be used
 instance_repetition = 2 # number of instances to be used for each size
 exact_sampling_ratio = 2 #How much elements should be summed to give obtained an exact M
 rgn = np.random.default_rng() #Random generator
@@ -90,72 +91,81 @@ if __name__ == '__main__':
         
     #Initizalize workers pool and output files
     with mp.Pool(processes= cpus) as pool: 
+        #with  open(file_out, 'w') as fout:  
+            #with open(file_instances, 'w') as finst:
+                
+        data_header = ['Sample', 'Size', 'Max Value', 'Total sum', 'M', 'Exact?', 'Algorithm', 
+                       'epsilon', 'Value', 'Value / M', 't', 't stdv']
+        
+        #If instances file and data file exists from previous runs
+        
+        
         with  open(file_out, 'w') as fout:  
-            with open(file_instances, 'w') as finst:
+            write_line_to_file(data_header, fout)
                 
-                data_header = ['Sample', 'Size', 'Max Value', 'Total sum', 'M', 'Exact?', 'Algorithm', 
-                               'epsilon', 'Value', 'Value / M', 't', 't stdv']
-                write_line_to_file(data_header, fout)
+        for size in sizes:
+            for rept in range(instance_repetition):
                 
-                for size in sizes:
-                    for rept in range(instance_repetition):
+                #Generates an instance of the given size
+                instance = sg.generator(size)
+                #Write instance to file
+                #WARNING: If there is a file from previous runs it will add to the end!
+                with open(file_instances, 'a') as finst:
+                    write_line_to_file(instance, finst)
+                #Get instance information
+                max_value = instance[-1]
+                total_sum = instance.sum()
+                
+                #Gets a M value that gives a possible optimal solution
+                #It is needed that M / 2 > max_value
+                less_than = True
+                while less_than:
+                    exact = rgn.choice(instance, size // exact_sampling_ratio, replace= False).sum()
+                    less_than = ((exact / 2 ) < max_value)
+                
+                    
+                
+                for r_value in target_ratios:
+                    
+                    #Text base to output for data file
+                    count += 1
+                    text_out_base = [count, size, max_value, total_sum]
+                    
+                    M = int(r_value * exact)
+                    
+                    is_exact = (r_value == 1)
+                    #Register target value
+                    text_out_base = text_out_base + [M]
+                    #Register if it is an exact solution or if it is unknown
+                    if is_exact:
+                        text_out_base += ['E']
+                    else:
+                        text_out_base += ['U']
+                    
+                    #Computes value and time
+                    data = pool.starmap(gss.greedySS2_timed, cpus * [[instance, M]])
+                    t_average, t_stdv, value = extrac_data(data)
+                    #Add to the data line the remaining data
+                    text_out = text_out_base +  ['G', '-', value, value / M, t_average, t_stdv]
+                    
+                    #Write data to file
+                    with  open(file_out, 'a') as fout: 
+                        write_line_to_file(text_out, fout)
+                    
+                    
+                    text_out_base_SS = text_out_base + ['S']
+                    
+                    #Computes time and value using scheme algorithm
+                    for e in epsilon:
+                       	count += 1
+                       	text_out_base_SS[0] = count
+                        text_out = text_out_base_SS + [e]
+                        data = pool.starmap(sss.schemeSS_val_timed, cpus * [[instance, M, e]])
                         
-                        #Generates an instance of the given size
-                        instance = sg.generator(size)
-                        #Write instance to file
-                        write_line_to_file(instance, finst)
-                        #Get instance information
-                        max_value = instance[-1]
-                        total_sum = instance.sum()
+                        t_average, t_stdv, value = extrac_data(data)
+                        #Add to the data line the remaining data
+                        text_out += [value, value / M, t_average, t_stdv]
                         
-                        #Gets a M value that gives a possible optimal solution
-                        #It is needed that M / 2 > max_value
-                        less_than = True
-                        while less_than:
-                            exact = rgn.choice(instance, size // exact_sampling_ratio, replace= False).sum()
-                            less_than = ((exact / 2 ) < max_value)
-                        
-                            
-                        
-                        for r_value in target_ratios:
-                            
-                            #Text base to output for data file
-                            count += 1
-                            text_out_base = [count, size, max_value, total_sum]
-                            
-                            M = int(r_value * exact)
-                            
-                            is_exact = (r_value == 1)
-                            #Register target value
-                            text_out_base = text_out_base + [M]
-                            #Register if it is an exact solution or if it is unknown
-                            if is_exact:
-                                text_out_base += ['E']
-                            else:
-                                text_out_base += ['U']
-                            
-                            #Computes value and time
-                            data = pool.starmap(gss.greedySS2_timed, cpus * [[instance, M]])
-                            t_average, t_stdv, value = extrac_data(data)
-                            #Add to the data line the remaining data
-                            text_out = text_out_base +  ['G', '-', value, value / M, t_average, t_stdv]
-                            
-                            #Write data to file
+                        #Write data to file
+                        with  open(file_out, 'a') as fout: 
                             write_line_to_file(text_out, fout)
-                            
-                            
-                            text_out_base_SS = text_out_base + ['S']
-                            
-                            #Computes time and value using scheme algorithm
-                            for e in epsilon:
-                               	count += 1
-                               	text_out_base_SS[0] = count
-                                text_out = text_out_base_SS + [e]
-                                data = pool.starmap(sss.schemeSS_val_timed, cpus * [[instance, M, e]])
-                                
-                                t_average, t_stdv, value = extrac_data(data)
-                                #Add to the data line the remaining data
-                                text_out += [value, value / M, t_average, t_stdv]
-                                
-                                #Write data to file
-                                write_line_to_file(text_out, fout)
