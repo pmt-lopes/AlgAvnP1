@@ -179,6 +179,8 @@ if __name__ == '__main__':
                     data = pool.starmap(rgli.rgli_timed_sol, cpus * [[instance, M, iteration_rgli]])
                     t_average, t_stdv, value = extrac_data(data)
                     #Add to the data line the remaining data
+                    count += 1
+                    text_out_base[0] = count
                     text_out = text_out_base +  ['R', '-', value, value / M, t_average, t_stdv]
                     
                     #Write data to file
