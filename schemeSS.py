@@ -54,6 +54,48 @@ def merge_lists_sol(L, L_plus):
         
     return merged
 
+def merge_lists_sol_trim(L, L_plus, delta):
+    merged = []
+    i, j = 0, 0
+    len_L, len_L_plus = len(L), len(L_plus)
+    
+    threshold_multiplier = 1 + delta
+    
+    #Handle the first case, since merged is empty
+    if L[i] < L_plus[j]:
+        merged.append(L[i]); i += 1
+    else:
+        merged.append(L_plus[j]); j += 1
+    
+    #Remaning merge with trim
+    while i < len_L and j < len_L_plus:
+        if L[i] < L_plus[j]:
+            #if the new element is inside the window of triming
+            if L[i] > merged[-1] * threshold_multiplier:
+                merged.append(L[i])
+            i += 1
+        else:
+            if L_plus[j] > merged[-1] * threshold_multiplier:
+                merged.append(L_plus[j])
+            j += 1
+            
+    if i < len_L:
+        #don't add if they fall inside trim windows
+        while i < len_L and L[i] <= merged[-1] * threshold_multiplier:
+            i += 1
+    
+    if i < len_L:
+        merged.extend(L[i:])
+    
+    if j < len_L_plus:
+        while j < len_L_plus and L_plus[j] <= merged[-1] * threshold_multiplier:
+            j += 1
+        
+    if j < len_L_plus:
+        merged.extend(L_plus[j:])
+        
+    return merged
+
 def trim(L, delta):
     
     trimmed = [L[0]]
@@ -247,7 +289,32 @@ def schemeSS_val_timed_opt_2(S, M, eps):
     
     return (t1 - t0) / 10**9, best_val
 
+def schemeSS_val_timed_opt_3(S, M, eps):
+    
+    t0 = time.time_ns()
+    
+    n = len(S)
+    delta = eps / (2 * n)
+    
+    L = [0]
+    
+    for i, xi in enumerate(S):
+        # Create L_plus
+        L_plus = [val + xi for val in L]
+        L_plus = remove_greater_sol(L_plus, M)
+        
+        # Merge (both already sorted)
+        L = merge_lists_sol_trim(L, L_plus, delta)
+        
+        # Trim
+        #L = trim_sol(L, delta)
 
+    # Extract best solution value
+    best_val = L[-1]
+    
+    t1 = time.time_ns()
+    
+    return (t1 - t0) / 10**9, best_val
 
 def read_instance(filename):
     with open(filename, "r") as f:
@@ -295,11 +362,19 @@ if __name__ == "__main__":
         t2, best_value = schemeSS_val_timed_opt_2(instance, M[i], 2.0)
         print(f"OPT2: Size {len(instance)} - time {t2} - solution {best_value}")
         
+        t3, best_value = schemeSS_val_timed_opt_3(instance, M[i], 2.0)
+        print(f"OPT3: Size {len(instance)} - time {t3} - solution {best_value}")
+        
         print()
         
         print(f'Speed up O / Opt1: {t0/t1}')
         print(f'Speed up O / Opt2: {t0/t2}')
+        print(f'Speed up O / Opt3: {t0/t3}')
+        
         print(f'Speed up Opt1 / Opt2: {t1/t2}')
+        print(f'Speed up Opt1 / Opt3: {t1/t3}')
+        
+        print(f'Speed up Opt2 / Opt3: {t2/t3}')
         
         print()
               
