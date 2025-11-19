@@ -169,3 +169,4 @@ if __name__ == '__main__':
                         #Write data to file
                         with  open(file_out, 'a') as fout: 
                             write_line_to_file(text_out, fout)
+                        print(text_out)
