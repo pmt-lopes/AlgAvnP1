@@ -131,9 +131,14 @@ if __name__ == "__main__":
         
         finalSol = []
         finalSum = 0
-
-        for j in range(iterations):
-            finalSum, _ = rgli(instance, M[i], iterations)
+        
+        t0 = time.time_ns()
+        
+        finalSum, _ = rgli(instance, M[i], iterations)
+        
+        t1 = time.time_ns()
+        
         print("Final sum: ", str(finalSum))
+        print('time: ', (t1-t0) * 10**-9)
     #print(finalSol)
 
