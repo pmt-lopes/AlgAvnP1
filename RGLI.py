@@ -112,6 +112,29 @@ def rgli(S, M, iterations):
     
     return finalSum, finalSol
 
+def rgli_timed(S, M, iterations):
+    
+    t0 = time.time_ns()
+    
+    finalSol = []
+    finalSum = 0
+    
+    for j in range(iterations):
+        sol, sum, remaining = randomGreedy(instance, M) # Perform random Greedy selection
+
+        improvedSol, improvedSum = localImprovement(sol, sum, remaining, M) # Perform local improvement
+
+        if improvedSum > finalSum:
+            finalSum = improvedSum
+            finalSol = improvedSol
+            
+    t1 = time.time_ns() #since the time will compare with algorithms
+    #without solution it does not count the last solution sort
+
+    finalSol.sort()
+    
+    return (t1 - t0) * 10**-9, finalSum, finalSol
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python RGLI.py <instance_file> iterations")
@@ -132,13 +155,9 @@ if __name__ == "__main__":
         finalSol = []
         finalSum = 0
         
-        t0 = time.time_ns()
-        
-        finalSum, _ = rgli(instance, M[i], iterations)
-        
-        t1 = time.time_ns()
+        t, finalSum, _ = rgli_timed(instance, M[i], iterations)
         
         print("Final sum: ", str(finalSum))
-        print('time: ', (t1-t0) * 10**-9)
+        print('time: ', t)
     #print(finalSol)
 
