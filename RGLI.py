@@ -1,5 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Implements the randomized greedy with local improvement (RGLI) from
+reference ,
+for solving a maximum subset-sum problem using triming the solutuins
+that are closer to a factor of each other
+
+Receives a set of numbers, a value and the trimming factor 
+and gives a approximation to the maximum sum of elements of a subset equal or 
+less than the value
+
+@author: Andre Wemans, 48432
+@author: Pedro Lopes, 57514
+"""
+
 import sys
 import random
+import csv
+import time
 
 def randomGreedy(S, M):
     randomS = list(S)
@@ -63,6 +81,18 @@ def read_instance(filename):
         M = int(M)   
         
         return S, M
+    
+def read_large_instances(file_name):
+    with open(file_name, 'r') as file:
+        
+        out = []
+        
+        csv_file = csv.reader(file, delimiter= '\t')
+        
+        for line in csv_file:
+            out.append(line)
+        
+    return out
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
@@ -71,21 +101,29 @@ if __name__ == "__main__":
     
     filename = sys.argv[1]
     iterations = int(sys.argv[2])
-    S, M = read_instance(filename)
+    
+    instances = read_large_instances(filename)
+    for i in range(len(instances)):
+        instances[i] = [int(j) for j in instances[i]]
+    
+    M= [89, 133, 9872, 10825, 1033062, 1000706]
+    #S, M = read_instance(filename)
+    
+    for i, instance in enumerate(instances):
+        
+        finalSol = []
+        finalSum = 0
 
-    finalSol = []
-    finalSum = 0
+        for j in range(iterations):
+            sol, sum, remaining = randomGreedy(instance, M[i]) # Perform random Greedy selection
+    
+            improvedSol, improvedSum = localImprovement(sol, sum, remaining, M[i]) # Perform local improvement
+    
+            if improvedSum > finalSum:
+                finalSum = improvedSum
+                finalSol = improvedSol
 
-    for i in range(iterations):
-        sol, sum, remaining = randomGreedy(S, M) # Perform random Greedy selection
-
-        improvedSol, improvedSum = localImprovement(sol, sum, remaining, M) # Perform local improvement
-
-        if improvedSum > finalSum:
-            finalSum = improvedSum
-            finalSol = improvedSol
-
-    finalSol.sort()
-    print("Final sum: ", str(finalSum))
-    print(finalSol)
+        finalSol.sort()
+        print("Final sum: ", str(finalSum))
+    #print(finalSol)
 
