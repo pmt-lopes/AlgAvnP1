@@ -161,7 +161,7 @@ def schemeSS_val(S, M, eps):
     
     return best_val
 
-def schemeSS_val_timed(S, M, eps):
+def schemeSS_val_timed_old(S, M, eps):
     
     t0 = time.time_ns()
     
@@ -190,7 +190,7 @@ def schemeSS_val_timed(S, M, eps):
     
     return (t1 - t0) / 10**9, best_val
 
-def schemeSS_val_timed_opt_1(S, M, eps):
+def schemeSS_val_timed(S, M, eps):
     
     t0 = time.time_ns()
     
@@ -209,9 +209,6 @@ def schemeSS_val_timed_opt_1(S, M, eps):
         
         # Trim
         L = trim_sol(L, delta)
-        
-        # # Remove elements > M
-        # L = remove_greater_sol(L, M)
 
     # Extract best solution value
     best_val = L[-1]
@@ -290,10 +287,10 @@ if __name__ == "__main__":
     M= [89, 133, 9872, 10825, 1033062, 1000706]
     
     for i, instance in enumerate(instances):
-        t0, best_value = schemeSS_val_timed(instance, M[i], 2.0)
+        t0, best_value = schemeSS_val_timed_old(instance, M[i], 2.0)
         print(f"O: Size {len(instance)} - time {t0} - solution {best_value}")
         
-        t1, best_value = schemeSS_val_timed_opt_1(instance, M[i], 2.0)
+        t1, best_value = schemeSS_val_timed(instance, M[i], 2.0)
         print(f"OPT1: Size {len(instance)} - time {t1} - solution {best_value}")
         t2, best_value = schemeSS_val_timed_opt_2(instance, M[i], 2.0)
         print(f"OPT2: Size {len(instance)} - time {t2} - solution {best_value}")
