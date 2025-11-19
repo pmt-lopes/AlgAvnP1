@@ -34,17 +34,19 @@ import multiprocessing as mp
 import schemeSS as sss
 import greddyMSS as gss
 import setGenerator as sg
+import RGLI as rgli
 
 #%% Constants and hard coded parameters
 cpus = 10 #To use 10 parallel workers
 file_out = 'mss-data-0.txt'
 file_instances = 'mss-instances-0.txt'
-sizes = [10, 100] #instance sizes to be used
+sizes = [10, 100, 1000, 10000, 100000] #instance sizes to be used
 instance_repetition = 2 # number of instances to be used for each size
 exact_sampling_ratio = 2 #How much elements should be summed to give obtained an exact M
 rgn = np.random.default_rng() #Random generator
 target_ratios = [.5, 1, 2] #Ratios of exact value to use as M for each instance
-epsilon = [0.5, 1, 2]
+epsilon = [0.5, 1, 2] #epsilon for the schemeSS algorithm
+iteration_rgli = 50 #Number of trials of the RGLI algorithm
 #%% Functions
 def write_line_to_file(line, file_pointer):
     '''Writes an instance to the file storing used instances
@@ -151,6 +153,7 @@ if __name__ == '__main__':
                     #Write data to file
                     with  open(file_out, 'a') as fout: 
                         write_line_to_file(text_out, fout)
+                    print(text_out)
                     
                     
                     text_out_base_SS = text_out_base + ['S']
@@ -170,3 +173,15 @@ if __name__ == '__main__':
                         with  open(file_out, 'a') as fout: 
                             write_line_to_file(text_out, fout)
                         print(text_out)
+                            
+                    
+                    #Computes value and time
+                    data = pool.starmap(rgli.rgli_timed_sol, cpus * [[instance, M, iteration_rgli]])
+                    t_average, t_stdv, value = extrac_data(data)
+                    #Add to the data line the remaining data
+                    text_out = text_out_base +  ['R', '-', value, value / M, t_average, t_stdv]
+                    
+                    #Write data to file
+                    with  open(file_out, 'a') as fout: 
+                        write_line_to_file(text_out, fout)
+                    print(text_out)
