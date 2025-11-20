@@ -66,6 +66,10 @@ def localImprovement(Sol, sum, remaining, M):
             improvedSol += [bestReplacement]
 
             remaining.remove(bestReplacement)
+            
+            #TODO: Break for loop if error == 0
+            #Not implemented because it was not used in the tests
+            #to measure execution time
 
     return improvedSol, improvedSum
 
@@ -150,6 +154,10 @@ def rgli_timed_sol(S, M, iterations):
         if improvedSum > finalSum:
             finalSum = improvedSum
             finalSol = improvedSol
+            
+        #TODO: If the finalSum == M, break the for loop
+        #Not implemented because it was not used in the tests to measure
+        #execution time
             
     t1 = time.time_ns() #since the time will compare with algorithms
     #without solution it does not count the last solution sort
