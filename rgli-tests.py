@@ -47,3 +47,8 @@ with open(instances_file, 'r') as file:
 #filters data just for the rgli algorithm
 data_rgli = data[data['Algorithm'] == 'R']
 
+#%%Applies the RGLI algorithm to all instances and collects data
+
+
+for i, instance in enumerate(instances):
+    pass
