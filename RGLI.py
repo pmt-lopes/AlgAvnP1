@@ -35,6 +35,24 @@ def randomGreedy(S, M):
     remaining.sort()
     return sol, sum, remaining
 
+def randomGreedy_threadSafe(S, M):
+    local_random = random.Random()
+    local_random.seed(time.time_ns())
+    randomS = list(S)
+    local_random.shuffle(randomS)
+
+    sol = []
+    sum = 0
+
+    for el in randomS:
+        if sum + el < M:
+            sol += [el]
+            sum += el
+    
+    remaining = list(set(S) - set(sol))
+    remaining.sort()
+    return sol, sum, remaining
+
 def filterFunction(el, r, error):
     bigger = r > el # Element in remaining has to be bigger to have an improvement
     diff = r - el
