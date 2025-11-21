@@ -163,7 +163,8 @@ if __name__ == '__main__':
                        	count += 1
                        	text_out_base_SS[0] = count
                         text_out = text_out_base_SS + [e]
-                        data = pool.starmap(sss.schemeSS_val_timed, cpus * [[instance, M, e]])
+                        data = pool.starmap(sss.schemeSS_val_timed, 
+                                            cpus * [[instance, M, e]])
                         
                         t_average, t_stdv, value = extrac_data(data)
                         #Add to the data line the remaining data

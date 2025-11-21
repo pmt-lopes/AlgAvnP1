@@ -91,6 +91,37 @@ def localImprovement(Sol, sum, remaining, M):
 
     return improvedSol, improvedSum
 
+def localImprovement_sol(Sol, sum, remaining, M):
+
+    improvedSol = list(Sol)
+    improvedSum = sum
+    
+    if sum == M:
+        return Sol, sum
+    
+    error = M - sum
+    
+    for el in Sol:
+        replacements = [r for r in remaining if filterFunction(el, r, error)] # Remaining elements that can replace el
+        if(len(replacements) > 0):
+            bestReplacement = max(replacements)
+
+            improvement = bestReplacement - el
+            improvedSum += improvement
+
+            error = M - improvedSum
+
+            improvedSol.remove(el)
+            improvedSol += [bestReplacement]
+
+            remaining.remove(bestReplacement)
+            
+            #TODO: Break for loop if error == 0
+            #Not implemented because it was not used in the tests
+            #to measure execution time
+
+    return improvedSum
+
 
 def read_instance(filename):
     with open(filename, "r") as f:
