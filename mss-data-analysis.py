@@ -3,10 +3,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Maximum Subset Sum problem - Analysis of 2 approximation algorithms experimental
+Maximum Subset Sum problem - Analysis of 3 approximation algorithms experimental
 data
 1- A 2-approximation greed algorithm
 2- A trim scheme algorithm with a approximation ratio of (1+epsilon)
+3- randomized greedy with local improvement (RGLI)
 
 Several instances of sets containing positive integers number, with different
 sizes are created and tested for different target values, M, and epsilon values
@@ -21,9 +22,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from scipy import stats
+
+import os
 #%% Constants and global variables
-file_name = 'mss-data.txt'
-lines_to_remove = 2
+file_name = 'mss-data-0.txt'
+lines_to_remove = 1
+
+cwd = os.getcwd()
 #%% Read data from file
 data = pd.read_csv(file_name, sep= '\t')
 
@@ -33,9 +38,7 @@ data = data.iloc[:- lines_to_remove]
 #Changing information from 'U' to 'E' in the cases that one of the algorithms
 #did obtained a solution with the target value, and in this way it is possible
 #to know the optimal value
-#Done manually since it only happens in instances of size 10 and for some values
-data.iloc[:4, 5] = 'E'
-data.iloc[12:16, 5] = 'E'
+data.loc[data['Value / M'] == 1.0, 'Exact?'] = 'E'
 #%% Plot comparing algorithms ratio value / M for the different M values
 # Code obtained from Claude IA
 # Convert epsilon to numeric, '-' becomes NaN
@@ -52,7 +55,8 @@ colors = {
     'Greedy': '#1f77b4',      # Blue
     'SchemeSS ε=0.5': '#ff7f0e',  # Orange
     'SchemeSS ε=1': '#2ca02c',    # Green
-    'SchemeSS ε=2': '#d62728'     # Red
+    'SchemeSS ε=2': '#d62728',     # Red
+    'RGLI': '#9467bd'             # Purple
 }
 
 # Define markers for exact vs unknown
@@ -133,6 +137,39 @@ for eps in epsilon_values:
                           edgecolors='black',
                           linewidths=0.8,
                           zorder=10)
+
+# Plot RGLI algorithm
+rgli_data = data[data['Algorithm'] == 'R']
+for exact_type in ['E', 'U']:
+    subset = rgli_data[rgli_data['Exact?'] == exact_type]
+    if not subset.empty:
+        # Separate perfect and non-perfect solutions
+        subset_nonzero = subset[subset['Gap'] > 0]
+        subset_perfect = subset[subset['Gap'] == 0]
+        
+        # Plot non-zero gaps
+        if not subset_nonzero.empty:
+            label = 'RGLI' if exact_type == 'U' else None
+            ax.scatter(subset_nonzero['M'], subset_nonzero['Gap'], 
+                      color=colors['RGLI'], 
+                      marker=markers_exact[exact_type],
+                      s=marker_sizes[exact_type],
+                      alpha=0.7,
+                      label=label,
+                      edgecolors='black',
+                      linewidths=0.5)
+        
+        # Plot perfect solutions with star marker
+        if not subset_perfect.empty:
+            ax.scatter(subset_perfect['M'], 
+                      [perfect_gap_display] * len(subset_perfect), 
+                      color=colors['RGLI'], 
+                      marker='*',
+                      s=200,
+                      alpha=0.9,
+                      edgecolors='black',
+                      linewidths=0.8,
+                      zorder=10)
 
 # Set logarithmic scale for both axes
 ax.set_xscale('log')
@@ -219,6 +256,15 @@ for eps in epsilon_values:
     print(f"  Min gap:  {scheme_gaps.min():.6f} ({scheme_gaps.min()*100:.4f}%)")
     print(f"  Max gap:  {scheme_gaps.max():.6f} ({scheme_gaps.max()*100:.4f}%)")
     print(f"  Perfect solutions: {(scheme_data['Gap'] == 0).sum()}")
+    
+
+print("\nRGLI algorithm:")
+rgli_data = data[data['Algorithm'] == 'R']
+rgli_gaps = rgli_data[rgli_data['Gap'] > 0]['Gap']
+print(f"  Mean gap: {rgli_gaps.mean():.6f} ({rgli_gaps.mean()*100:.4f}%)")
+print(f"  Min gap:  {rgli_gaps.min():.6f} ({rgli_gaps.min()*100:.4f}%)")
+print(f"  Max gap:  {rgli_gaps.max():.6f} ({rgli_gaps.max()*100:.4f}%)")
+print(f"  Perfect solutions: {(rgli_data['Gap'] == 0).sum()}")
 
 print("\n" + "="*60)
 
@@ -227,12 +273,12 @@ print("\n" + "="*60)
 # Create the plot with dimensions optimized for A4 report
 fig, ax = plt.subplots(figsize=(7.5, 5))
 
-# Define colors for each algorithm/epsilon combination
 colors = {
     'Greedy': '#1f77b4',      # Blue
     'SchemeSS ε=0.5': '#ff7f0e',  # Orange
     'SchemeSS ε=1': '#2ca02c',    # Green
-    'SchemeSS ε=2': '#d62728'     # Red
+    'SchemeSS ε=2': '#d62728',     # Red
+    'RGLI': '#9467bd'             # Purple
 }
 
 # Define markers for each algorithm
@@ -240,7 +286,8 @@ markers = {
     'Greedy': 'o',
     'SchemeSS ε=0.5': 's',
     'SchemeSS ε=1': '^',
-    'SchemeSS ε=2': 'D'
+    'SchemeSS ε=2': 'D',
+    'RGLI': 'v'  # downward triangle
 }
 
 # Plot Greedy algorithm - individual points
@@ -275,6 +322,22 @@ for eps in epsilon_values:
                 capsize=5,
                 capthick=1.5,
                 label=label_base,
+                alpha=0.7)
+    
+# Plot RGLI algorithm - individual points
+rgli_data = data[data['Algorithm'] == 'R']
+if not rgli_data.empty:
+    ax.errorbar(rgli_data['Size'], rgli_data['t'], 
+                yerr=rgli_data['t stdv'],
+                color=colors['RGLI'], 
+                marker=markers['RGLI'],
+                markersize=8,
+                linewidth=0,
+                linestyle='',
+                elinewidth=1.5,
+                capsize=5,
+                capthick=1.5,
+                label='RGLI',
                 alpha=0.7)
 
 # Set logarithmic scale for both axes
@@ -331,6 +394,8 @@ for size in sorted(data['Size'].unique()):
     for eps in epsilon_values:
         scheme_count = len(data[(data['Size'] == size) & (data['Algorithm'] == 'S') & (data['epsilon'] == eps)])
         print(f"  SchemeSS ε={eps}: {scheme_count} points")
+    rgli_count = len(data[(data['Size'] == size) & (data['Algorithm'] == 'R')])
+    print(f"  RGLI: {rgli_count} points")
 
 print("\n" + "="*70)
 print("Each point represents one combination of (Size, Instance, M value)")
@@ -435,6 +500,45 @@ for eps in epsilon_values:
         'color': colors[eps]
     }
 
+# RGLI algorithm
+print("\n" + "="*80)
+print("RGLI ALGORITHM")
+print("="*80)
+
+rgli_data = data[data['Algorithm'] == 'R'].copy()
+
+if not rgli_data.empty:
+    print(f"\nNumber of data points: {len(rgli_data)}")
+    
+    # Take logarithms
+    log_n = np.log10(rgli_data['Size'].values)
+    log_t = np.log10(rgli_data['t'].values)
+    
+    # Perform linear regression
+    slope, intercept, r_value, p_value, std_err = stats.linregress(log_n, log_t)
+    
+    # Calculate the constant c
+    c = 10**intercept
+    
+    print(f"\nRegression results:")
+    print(f"  Slope (b):       {slope:.4f}")
+    print(f"  Intercept:       {intercept:.4f}")
+    print(f"  Constant (c):    {c:.4e}")
+    print(f"  R² value:        {r_value**2:.6f}  (goodness of fit, 1.0 = perfect)")
+    print(f"  P-value:         {p_value:.6e}")
+    print(f"  Std error:       {std_err:.6f}")
+    
+    print(f"\n✓ Time complexity: t ≈ {c:.2e} × n^{slope:.2f}")
+    print(f"\n✓ Big-O notation:  O(n^{slope:.2f})")
+    
+    # Store for plotting
+    regression_results['RGLI'] = {
+        'slope': slope,
+        'intercept': intercept,
+        'c': c,
+        'r2': r_value**2,
+        'color': '#9467bd'
+    }
 # Summary comparison
 print("\n" + "="*80)
 print("SUMMARY: TIME COMPLEXITY COMPARISON")
@@ -453,6 +557,12 @@ for eps in epsilon_values:
     algo_name = f'SchemeSS ε={eps}'
     big_o_str = f"O(n^{result['slope']:.2f})"
     print(f"{algo_name:<20} t ≈ {result['c']:.2e} × n^{result['slope']:.2f}  {big_o_str:<15} {result['r2']:.6f}")
+    
+# RGLI (if data exists)
+if 'RGLI' in regression_results:
+    result = regression_results['RGLI']
+    big_o_str = f"O(n^{result['slope']:.2f})"
+    print(f"{'RGLI':<20} t ≈ {result['c']:.2e} × n^{result['slope']:.2f}  {big_o_str:<15} {result['r2']:.6f}")
 
 print("\n" + "="*80)
 print("INTERPRETATION:")
@@ -474,7 +584,8 @@ markers = {
     'Greedy': 'o',
     'SchemeSS ε=0.5': 's',
     'SchemeSS ε=1': '^',
-    'SchemeSS ε=2': 'D'
+    'SchemeSS ε=2': 'D',
+    'RGLI': 'v'
 }
 
 # Plot individual data points
@@ -496,6 +607,17 @@ for eps in epsilon_values:
               s=50,
               alpha=0.6,
               label=f'{label_base} (data)',
+              zorder=3)
+    
+# RGLI
+rgli_data = data[data['Algorithm'] == 'R']
+if not rgli_data.empty and 'RGLI' in regression_results:
+    ax.scatter(rgli_data['Size'], rgli_data['t'],
+              color=regression_results['RGLI']['color'],
+              marker=markers['RGLI'],
+              s=50,
+              alpha=0.6,
+              label='RGLI (data)',
               zorder=3)
 
 # Plot regression lines
@@ -570,7 +692,8 @@ colors = {
     'Greedy': '#1f77b4',      # Blue
     'SchemeSS ε=0.5': '#ff7f0e',  # Orange
     'SchemeSS ε=1': '#2ca02c',    # Green
-    'SchemeSS ε=2': '#d62728'     # Red
+    'SchemeSS ε=2': '#d62728',     # Red
+    'RGLI': '#9467bd'             # Purple
 }
 
 # Define markers for exact vs unknown
@@ -650,6 +773,39 @@ for eps in epsilon_values:
                           edgecolors='black',
                           linewidths=0.8,
                           zorder=10)
+                
+# Plot RGLI algorithm
+rgli_data = data[data['Algorithm'] == 'R']
+for exact_type in ['E', 'U']:
+    subset = rgli_data[rgli_data['Exact?'] == exact_type]
+    if not subset.empty:
+        # Separate perfect and non-perfect solutions
+        subset_nonzero = subset[subset['Gap'] > 0]
+        subset_perfect = subset[subset['Gap'] == 0]
+        
+        # Plot non-zero gaps
+        if not subset_nonzero.empty:
+            label = 'RGLI' if exact_type == 'U' else None
+            ax.scatter(subset_nonzero['Size'], subset_nonzero['Gap'], 
+                      color=colors['RGLI'], 
+                      marker=markers_exact[exact_type],
+                      s=marker_sizes[exact_type],
+                      alpha=0.7,
+                      label=label,
+                      edgecolors='black',
+                      linewidths=0.5)
+        
+        # Plot perfect solutions with star marker
+        if not subset_perfect.empty:
+            ax.scatter(subset_perfect['Size'], 
+                      [perfect_gap_display] * len(subset_perfect), 
+                      color=colors['RGLI'], 
+                      marker='*',
+                      s=200,
+                      alpha=0.9,
+                      edgecolors='black',
+                      linewidths=0.8,
+                      zorder=10)
 
 # Set logarithmic scale for both axes
 ax.set_xscale('log')
@@ -726,14 +882,16 @@ colors = {
     'G': '#1f77b4',      # Blue for Greedy
     0.5: '#2ca02c',      # Green for ε=0.5
     1.0: '#ff7f0e',      # Orange for ε=1
-    2.0: '#d62728'       # Red for ε=2
+    2.0: '#d62728',       # Red for ε=2
+    'R': '#9467bd'       # Purple for RGLI
 }
 
 markers = {
     'G': 'o',
     0.5: 's',
     1.0: '^',
-    2.0: 'D'
+    2.0: 'D',
+    'R': 'v'
 }
 
 # Plot Greedy
@@ -764,6 +922,19 @@ for eps in epsilon_values:
                   edgecolors='black',
                   linewidths=0.5,
                   zorder=3)
+        
+# Plot RGLI
+rgli_data = data_nonzero[data_nonzero['Algorithm'] == 'R']
+if not rgli_data.empty:
+    ax.scatter(rgli_data['t'], rgli_data['Gap'],
+              color=colors['R'],
+              marker=markers['R'],
+              s=100,
+              alpha=0.7,
+              label='RGLI',
+              edgecolors='black',
+              linewidths=0.5,
+              zorder=3)
 
 # Set logarithmic scale for both axes
 ax.set_xscale('log')
@@ -802,6 +973,8 @@ for eps in epsilon_values:
     eps_data = data_nonzero[(data_nonzero['Algorithm'] == 'S') & 
                             (data_nonzero['epsilon'] == eps)]
     print(f"  SchemeSS ε={eps}: {len(eps_data)}")
+rgli_data = data_nonzero[data_nonzero['Algorithm'] == 'R']
+print(f"  RGLI: {len(rgli_data)}")
 
 #%% Plot Time-Quality Trade-of but with N represented on marker sizes
 # Code obtained from Claude IA
@@ -821,14 +994,16 @@ colors = {
     'G': '#1f77b4',      # Blue for Greedy
     0.5: '#2ca02c',      # Green for ε=0.5
     1.0: '#ff7f0e',      # Orange for ε=1
-    2.0: '#d62728'       # Red for ε=2
+    2.0: '#d62728',       # Red for ε=2
+    'R': '#9467bd'       # Purple for RGLI
 }
 
 markers = {
     'G': 'o',
     0.5: 's',
     1.0: '^',
-    2.0: 'D'
+    2.0: 'D',
+    'R': 'v'
 }
 
 # Function to calculate marker size based on problem size
@@ -866,6 +1041,20 @@ for eps in epsilon_values:
                   edgecolors='black',
                   linewidths=0.5,
                   zorder=3)
+        
+# Plot RGLI
+rgli_data = data_nonzero[data_nonzero['Algorithm'] == 'R']
+if not rgli_data.empty:
+    sizes = [get_marker_size(size) for size in rgli_data['Size']]
+    ax.scatter(rgli_data['t'], rgli_data['Gap'],
+              color=colors['R'],
+              marker=markers['R'],
+              s=sizes,
+              alpha=0.7,
+              label='RGLI',
+              edgecolors='black',
+              linewidths=0.5,
+              zorder=3)
 
 # Set logarithmic scale for both axes
 ax.set_xscale('log')
@@ -924,3 +1113,203 @@ for eps in epsilon_values:
     eps_data = data_nonzero[(data_nonzero['Algorithm'] == 'S') & 
                             (data_nonzero['epsilon'] == eps)]
     print(f"  SchemeSS ε={eps}: {len(eps_data)}")
+rgli_data = data_nonzero[data_nonzero['Algorithm'] == 'R']
+print(f"  RGLI: {len(rgli_data)}")
+
+#%% Plot Time-Quality Trade-of but with N represented on marker sizes
+# Code obtained from Claude IA
+
+# Calculate Gap
+data['Gap'] = 1 - data['Value / M']
+
+# Create figure
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# Define colors and markers (matching previous plots)
+colors = {
+    'G': '#1f77b4',      # Blue for Greedy
+    0.5: '#2ca02c',      # Green for ε=0.5
+    1.0: '#ff7f0e',      # Orange for ε=1
+    2.0: '#d62728',       # Red for ε=2
+    'R': '#9467bd'       # Purple for RGLI
+}
+
+markers = {
+    'G': 'o',
+    0.5: 's',
+    1.0: '^',
+    2.0: 'D',
+    'R': 'v'
+}
+
+# For perfect solutions (Gap = 0), plot them at a very small value
+min_nonzero_gap = data[data['Gap'] > 0]['Gap'].min()
+perfect_gap_display = min_nonzero_gap / 10
+
+# Function to calculate marker size based on problem size
+def get_marker_size(size):
+    """Convert problem size to marker size using logarithmic scaling"""
+    return 30 + 70 * np.log10(size)  # Base size 30, scale with log10
+
+# Plot Greedy
+greedy_data = data[data['Algorithm'] == 'G']
+if not greedy_data.empty:
+    # Non-perfect solutions
+    greedy_nonzero = greedy_data[greedy_data['Gap'] > 0]
+    if not greedy_nonzero.empty:
+        sizes = [get_marker_size(size) for size in greedy_nonzero['Size']]
+        ax.scatter(greedy_nonzero['t'], greedy_nonzero['Gap'],
+                  color=colors['G'],
+                  marker=markers['G'],
+                  s=sizes,
+                  alpha=0.7,
+                  label='Greedy',
+                  edgecolors='black',
+                  linewidths=0.5,
+                  zorder=3)
+    
+    # Perfect solutions (Gap = 0)
+    greedy_perfect = greedy_data[greedy_data['Gap'] == 0]
+    if not greedy_perfect.empty:
+        sizes = [get_marker_size(size) for size in greedy_perfect['Size']]
+        ax.scatter(greedy_perfect['t'], 
+                  [perfect_gap_display] * len(greedy_perfect),
+                  color=colors['G'],
+                  marker='*',
+                  s=[s * 1 for s in sizes],  # Stars larger than regular markers
+                  alpha=0.9,
+                  edgecolors='black',
+                  linewidths=0.8,
+                  zorder=10)
+
+# Plot SchemeSS for each epsilon
+epsilon_values = [0.5, 1, 2]
+for eps in epsilon_values:
+    eps_data = data[(data['Algorithm'] == 'S') & (data['epsilon'] == eps)]
+    if not eps_data.empty:
+        # Non-perfect solutions
+        eps_nonzero = eps_data[eps_data['Gap'] > 0]
+        if not eps_nonzero.empty:
+            sizes = [get_marker_size(size) for size in eps_nonzero['Size']]
+            ax.scatter(eps_nonzero['t'], eps_nonzero['Gap'],
+                      color=colors[eps],
+                      marker=markers[eps],
+                      s=sizes,
+                      alpha=0.7,
+                      label=f'SchemeSS ε={eps}',
+                      edgecolors='black',
+                      linewidths=0.5,
+                      zorder=3)
+        
+        # Perfect solutions (Gap = 0)
+        eps_perfect = eps_data[eps_data['Gap'] == 0]
+        if not eps_perfect.empty:
+            sizes = [get_marker_size(size) for size in eps_perfect['Size']]
+            ax.scatter(eps_perfect['t'], 
+                      [perfect_gap_display] * len(eps_perfect),
+                      color=colors[eps],
+                      marker='*',
+                      s=[s * 1 for s in sizes],
+                      alpha=0.9,
+                      edgecolors='black',
+                      linewidths=0.8,
+                      zorder=10)
+
+# Plot RGLI
+rgli_data = data[data['Algorithm'] == 'R']
+if not rgli_data.empty:
+    # Non-perfect solutions
+    rgli_nonzero = rgli_data[rgli_data['Gap'] > 0]
+    if not rgli_nonzero.empty:
+        sizes = [get_marker_size(size) for size in rgli_nonzero['Size']]
+        ax.scatter(rgli_nonzero['t'], rgli_nonzero['Gap'],
+                  color=colors['R'],
+                  marker=markers['R'],
+                  s=sizes,
+                  alpha=0.7,
+                  label='RGLI',
+                  edgecolors='black',
+                  linewidths=0.5,
+                  zorder=3)
+    
+    # Perfect solutions (Gap = 0)
+    rgli_perfect = rgli_data[rgli_data['Gap'] == 0]
+    if not rgli_perfect.empty:
+        sizes = [get_marker_size(size) for size in rgli_perfect['Size']]
+        ax.scatter(rgli_perfect['t'], 
+                  [perfect_gap_display] * len(rgli_perfect),
+                  color=colors['R'],
+                  marker='*',
+                  s=[s * 1 for s in sizes],
+                  alpha=0.9,
+                  edgecolors='black',
+                  linewidths=0.8,
+                  zorder=10)
+
+# Set logarithmic scale for both axes
+ax.set_xscale('log')
+ax.set_yscale('log')
+
+# Invert y-axis so better performance (smaller gaps) is at the top
+ax.invert_yaxis()
+
+# Add labels and title
+ax.set_xlabel('Execution Time (seconds)', fontsize=11, fontweight='bold')
+ax.set_ylabel('Approximation Gap (1 - Value/M)', fontsize=11, fontweight='bold')
+ax.set_title('Algorithm Performance: Time vs Quality Trade-off\n(Perfect solutions shown with ★)', 
+             fontsize=12, fontweight='bold', pad=15)
+
+# Add grid
+ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
+ax.grid(True, which='minor', alpha=0.15, linestyle=':', linewidth=0.3)
+
+# Create algorithm legend
+algo_legend = ax.legend(loc='upper left', fontsize=9, framealpha=0.9,
+                        title='Algorithm', title_fontsize=10)
+
+# Add size legend
+size_legend_elements = []
+size_values = [10, 100, 1000, 10000]
+for size in size_values:
+    size_legend_elements.append(plt.scatter([], [], s=get_marker_size(size), 
+                                           c='gray', alpha=0.5, edgecolors='black', linewidths=0.5))
+# Add perfect solution marker to size legend
+size_legend_elements.append(Line2D([0], [0], marker='*', color='w', 
+                                   markerfacecolor='gold', markersize=12, 
+                                   label='Perfect (Gap=0)', 
+                                   markeredgecolor='black', markeredgewidth=0.8))
+
+size_legend = ax.legend(size_legend_elements, 
+                       [f'n={size:,}' for size in size_values] + ['Perfect (Gap=0)'],
+                       loc='lower right', 
+                       fontsize=8,
+                       framealpha=0.9,
+                       title='Problem Size',
+                       title_fontsize=9,
+                       scatterpoints=1)
+ax.add_artist(size_legend)
+ax.add_artist(algo_legend)
+
+plt.tight_layout()
+
+# Save
+plt.savefig('mss_time_vs_gap-N.png', 
+            dpi=300, bbox_inches='tight', facecolor='white')
+plt.savefig('mss_time_vs_gap-N.pdf', 
+            bbox_inches='tight', facecolor='white')
+
+print("Plot saved successfully!")
+print(f"Total data points plotted: {len(data)}")
+print(f"\nBreakdown by algorithm (including perfect solutions):")
+
+greedy_all = data[data['Algorithm'] == 'G']
+print(f"  Greedy: {len(greedy_all)} ({(greedy_all['Gap'] == 0).sum()} perfect)")
+
+for eps in epsilon_values:
+    eps_all = data[(data['Algorithm'] == 'S') & (data['epsilon'] == eps)]
+    print(f"  SchemeSS ε={eps}: {len(eps_all)} ({(eps_all['Gap'] == 0).sum()} perfect)")
+
+rgli_all = data[data['Algorithm'] == 'R']
+print(f"  RGLI: {len(rgli_all)} ({(rgli_all['Gap'] == 0).sum()} perfect)")
+
+print(f"\nTotal perfect solutions: {(data['Gap'] == 0).sum()}")
